@@ -3,12 +3,11 @@ import QtQuick.Layouts 1.1
 import 'qrc:///Core/core' as Core
 
 Rectangle {
-    id: capcalera
     color: '#D0FA58'
 
     Core.UseUnits { id: units }
 
-    property string pageTitle: qsTr("Appsemblea")
+    property string pageTitle: 'Aplicació'
     property int midaMainBar: units.fingerUnit + units.nailUnit * 2
     default property alias buttons: flowBarLayout.children
 
