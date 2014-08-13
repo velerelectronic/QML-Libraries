@@ -60,7 +60,10 @@ Rectangle {
         Loader {
             id: mainPanelLoader
             anchors.fill: parent
-            anchors.margins: globalMargins
+            anchors.leftMargin: globalMargins
+            anchors.rightMargin: globalMargins
+            anchors.topMargin: 0
+            anchors.bottomMargin: 0
         }
 
         Rectangle {
@@ -83,7 +86,10 @@ Rectangle {
         Loader {
             id: subPanelLoader
             anchors.fill: parent
-            anchors.margins: globalMargins
+            anchors.leftMargin: globalMargins
+            anchors.rightMargin: globalMargins
+            anchors.topMargin: 0
+            anchors.bottomMargin: 0
         }
     }
 
