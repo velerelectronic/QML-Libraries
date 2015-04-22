@@ -108,6 +108,32 @@ QVariantMap SqlTableModel::getObject(QString key) const {
         for (int i=0; i<searchRecord.count(); i++) {
             result.insert(searchRecord.fieldName(i),searchRecord.value(i));
         }
+    } else {
+        qDebug() << "Not found";
+    }
+
+    return result;
+}
+
+QVariantMap SqlTableModel::getObject(QString primaryField, QString key) const {
+    QSqlRecord searchRecord;
+    bool found = false;
+    int row=0;
+    while ((!found) && (row<rowCount())) {
+        searchRecord = this->record(row);
+        if (searchRecord.value(primaryField)==key)
+            found = true;
+        else
+            row++;
+    }
+
+    QVariantMap result;
+    if (found) {
+        for (int i=0; i<searchRecord.count(); i++) {
+            result.insert(searchRecord.fieldName(i),searchRecord.value(i));
+        }
+    } else {
+        qDebug() << "Not found";
     }
 
     return result;
@@ -122,7 +148,9 @@ QVariantMap SqlTableModel::getObjectInRow(int row) const {
     return result;
 }
 
-
+QString &SqlTableModel::groupBy() {
+    return innerGroupBy;
+}
 
 bool SqlTableModel::insertObject(const QVariantMap &object) {
     qDebug() << "Object to insert: " << object;
@@ -203,16 +231,53 @@ bool SqlTableModel::select() {
     deselectAllObjects();
     qDebug() << "Se seleccionara" << selectStatement();
 
-    if (innerLimit==0) {
+    if ((innerLimit==0) && (innerGroupBy=="")) {
         bool res = QSqlRelationalTableModel::select();
         countChanged();
         return res;
     } else {
-        QSqlQueryModel::setQuery(selectStatement() + " LIMIT " + QString::number(innerLimit));
-        countChanged();
-        qDebug() << query().lastError();
-        return !query().lastError().isValid();
+        if (innerGroupBy != "") {
+            qDebug() << selectStatement() + " GROUP BY " + innerGroupBy;
+            QSqlQueryModel::setQuery(selectStatement() + " GROUP BY " + innerGroupBy);
+            qDebug() << selectStatement();
+            countChanged();
+            qDebug() << query().lastError();
+            return !query().lastError().isValid();
+        } else {
+            QSqlQueryModel::setQuery(selectStatement() + " LIMIT " + QString::number(innerLimit));
+            countChanged();
+            qDebug() << query().lastError();
+            return !query().lastError().isValid();
+        }
     }
+}
+
+bool SqlTableModel::selectUnique(QString field) {
+    QSqlQueryModel::setQuery("SELECT " + field + " FROM " + innerTableName + " GROUP BY " + field);
+    qDebug() << query().executedQuery();
+    countChanged();
+    return !query().lastError().isValid();
+}
+
+QStringList SqlTableModel::selectDistinct(QString field,QString order,QString filter,bool ascending) {
+/*
+    QSqlQueryModel::setQuery("SELECT DISTINCT " + field + " FROM " + this->innerTableName + " ORDER BY " + order + " DESC ");
+    qDebug() << "SDIST";
+    qDebug() << this->query().lastQuery();
+    countChanged();
+    return !query().lastError().isValid();
+*/
+
+    QStringList vector;
+    QSqlQuery query("SELECT DISTINCT " + field + " FROM " + this->innerTableName + ((filter != "")?(" WHERE " + filter):"") + " ORDER BY " + order + ((ascending)?" ASC":" DESC "));
+    qDebug() << query.executedQuery();
+    bool iter = query.first();
+    while (iter) {
+        qDebug() << ".";
+        vector.append(query.record().value(0).toString());
+        iter = query.next();
+    }
+    return vector;
 }
 
 void SqlTableModel::selectObject(int row,bool activate) {
@@ -274,6 +339,12 @@ void SqlTableModel::setInnerFilters() {
     }
 
     QSqlTableModel::setFilter(fieldFilter);
+    qDebug() << tableName() + "Filter " + fieldFilter;
+}
+
+void SqlTableModel::setGroupBy(const QString &group) {
+    innerGroupBy = group;
+    groupByChanged();
 }
 
 void SqlTableModel::setLimit(int limit) {

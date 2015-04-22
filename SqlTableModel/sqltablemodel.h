@@ -23,6 +23,7 @@ class SqlTableModel : public QSqlRelationalTableModel
     Q_PROPERTY(QString searchString READ searchString WRITE setSearchString NOTIFY searchStringChanged)
     Q_PROPERTY(QString tableName READ tableName WRITE setTableName NOTIFY tableNameChanged)
     Q_PROPERTY(QString reference READ reference WRITE setReference NOTIFY referenceChanged)
+    Q_PROPERTY(QString groupBy READ groupBy WRITE setGroupBy NOTIFY groupByChanged)
 
 public:
     explicit SqlTableModel(QObject *parent = 0,QSqlDatabase db = QSqlDatabase());
@@ -31,6 +32,7 @@ public:
     Q_INVOKABLE QVariant data(const QModelIndex &index, int role) const;
     const QStringList &fieldNames();
     QStringList &filters();
+    QString &groupBy();
     int limit();
 
     QString reference();
@@ -39,6 +41,7 @@ public:
     QString searchString();
     void setFieldNames(const QStringList &fields);
     void setFilters(const QStringList &);
+    void setGroupBy(const QString &);
     void setLimit(int);
     void setReference(const QString &);
     void setSearchFields(const QStringList &);
@@ -49,11 +52,15 @@ public:
     Q_INVOKABLE bool setData(const QModelIndex &item,const QVariant &value,int role = Qt::EditRole);
 
     Q_INVOKABLE QVariantMap getObject(QString key) const;
+    Q_INVOKABLE QVariantMap getObject(QString primaryField, QString key) const;
     Q_INVOKABLE QVariantMap getObjectInRow(int row) const;
     Q_INVOKABLE bool insertObject(const QVariantMap &);
     Q_INVOKABLE bool removeObjectInRow(int);
     Q_INVOKABLE bool removeObjectWithKeyValue(const QVariant &);
     Q_INVOKABLE bool select();
+    Q_INVOKABLE QStringList selectDistinct(QString field,QString order,QString filter,bool ascending);
+    Q_INVOKABLE bool selectUnique(QString);
+
 //    Q_INVOKABLE bool setQuery(const QString query);
     Q_INVOKABLE bool updateObject(const QVariantMap &);
 
@@ -70,6 +77,7 @@ signals:
     void countChanged();
     void fieldNamesChanged();
     void filtersChanged();
+    void groupByChanged();
     void limitChanged();
     void referenceChanged();
     void searchFieldsChanged();
@@ -83,6 +91,7 @@ private:
     QString innerTableName;
     QStringList innerFieldNames;
     QStringList innerFilters;
+    QString innerGroupBy;
     int innerLimit;
     QStringList innerSearchFields;
     QString innerSearchString;
